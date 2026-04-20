@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Reminders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #EFEFEB;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text: #1A1A18;
+    --text-muted: #6B6B66;
+    --text-faint: #A0A09A;
+    --accent: #1A1A18;
+    --green: #1D9E75;
+    --green-bg: #E1F5EE;
+    --green-text: #0F6E56;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-text: #854F0B;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--text);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .nav-tab.active {
+    background: var(--text);
+    color: #fff;
+  }
+  .nav-tab:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* LAYOUT */
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* DASHBOARD HERO */
+  .hero {
+    background: var(--text);
+    border-radius: var(--radius);
+    padding: 2rem;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .hero-label { font-size: 12px; font-weight: 500; opacity: 0.5; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
+  .hero-date { font-size: 26px; font-weight: 600; }
+  .hero-stats { display: flex; gap: 1.5rem; }
+  .hero-stat { text-align: right; }
+  .hero-stat-num { font-size: 28px; font-weight: 600; }
+  .hero-stat-label { font-size: 12px; opacity: 0.5; }
+
+  /* SECTION */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .section-count {
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface2);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* REMINDER CARDS */
+  .reminder-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 2rem; }
+
+  .rem-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: box-shadow 0.15s;
+    animation: fadeIn 0.25s ease;
+  }
+  .rem-card:hover { box-shadow: var(--shadow); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .rem-card.today { border-left: 3px solid var(--amber); }
+  .rem-card.upcoming { border-left: 3px solid var(--green); }
+  .rem-card.past { opacity: 0.55; }
+
+  .rem-emoji {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .rem-content { flex: 1; min-width: 0; }
+  .rem-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .rem-subject { font-size: 15px; font-weight: 600; color: var(--text); }
+  .rem-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge-today { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-upcoming { background: var(--green-bg); color: var(--green-text); }
+  .badge-past { background: var(--surface2); color: var(--text-faint); }
+
+  .countdown {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-faint);
+  }
+  .countdown.urgent { color: var(--amber-text); }
+  .countdown.soon { color: var(--green-text); }
+
+  .rem-meta { font-size: 12px; color: var(--text-muted); margin: 4px 0 6px; }
+  .rem-msg { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+  .rem-author { font-size: 11px; color: var(--text-faint); margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+  .author-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--surface2); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--text-muted); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-faint);
+    padding: 4px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all 0.1s;
+  }
+  .delete-btn:hover { background: var(--red-bg); color: var(--red-text); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-faint);
+  }
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* FORM PAGE */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .form-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 1.5rem; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+  }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
+
+  .btn-submit {
+    width: 100%;
+    padding: 11px;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-submit:hover { opacity: 0.87; }
+  .btn-submit:active { transform: scale(0.99); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  @media (max-width: 600px) {
+    nav { padding: 0 1rem; }
+    .container { padding: 1.25rem 1rem; }
+    .hero { flex-direction: column; align-items: flex-start; }
+    .hero-stats { align-self: stretch; justify-content: flex-start; }
+    .form-row { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .nav-tab { padding: 6px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">
+    <div class="nav-icon">📅</div>
+    Team Reminders
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard', this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('schedule', this)">+ Schedule</button>
+    <button class="nav-tab" onclick="showPage('all', this)">All</button>
+  </div>
+</nav>
+
+<!-- DASHBOARD PAGE -->
+<div id="page-dashboard" class="page active">
+  <div class="container">
+    <div class="hero" id="hero"></div>
+
+    <div class="section-header">
+      <span class="section-title">Today</span>
+      <span class="section-count" id="today-count">0</span>
+    </div>
+    <div class="reminder-list" id="today-list"></div>
+
+    <div class="section-header">
+      <span class="section-title">Upcoming</span>
+      <span class="section-count" id="upcoming-count">0</span>
+    </div>
+    <div class="reminder-list" id="upcoming-list"></div>
+  </div>
+</div>
+
+<!-- SCHEDULE PAGE -->
+<div id="page-schedule" class="page">
+  <div class="container">
+    <div class="form-card">
+      <h2>Schedule a reminder</h2>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Subject *</label>
+          <input type="text" id="f-subject" placeholder="e.g. Production patching — server restart" />
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="form-group">
+          <label>Time *</label>
+          <input type="time" id="f-time" />
+        </div>
+        <div class="form-group full">
+          <label>Message</label>
+          <textarea id="f-message" placeholder="Add details, links, action items, or anything the team needs to know..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Your name</label>
+          <input type="text" id="f-author" placeholder="e.g. Sarah" />
+        </div>
+      </div>
+      <button class="btn-submit" onclick="addReminder()">Schedule reminder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALL REMINDERS PAGE -->
+<div id="page-all" class="page">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-title">All reminders</span>
+      <span class="section-count" id="all-count">0</span>
+    </div>
+    <div class="reminder-list" id="all-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let reminders = [];
+  try { reminders = JSON.parse(localStorage.getItem('tr_v2') || '[]'); } catch(e) {}
+
+  function save() {
+    try { localStorage.setItem('tr_v2', JSON.stringify(reminders)); } catch(e) {}
+  }
+
+  function getStatus(r) {
+    const now = new Date();
+    const dt = new Date(r.datetime);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 86400000);
+    if (dt >= todayStart && dt < todayEnd) return 'today';
+    if (dt >= todayEnd) return 'upcoming';
+    return 'past';
+  }
+
+  function getCountdown(r) {
+    const diff = Math.round((new Date(r.datetime) - new Date()) / 60000);
+    if (diff < 0) return null;
+    if (diff < 60) return { text: diff + 'm away', urgent: true };
+    if (diff < 1440) { const h = Math.round(diff/60); return { text: h + 'h away', urgent: h <= 2 }; }
+    const d = Math.round(diff/1440);
+    return { text: d + 'd away', urgent: false };
+  }
+
+  function getEmoji(subject) {
+    const s = (subject || '').toLowerCase();
+    if (/patch|updat|deploy|restart/.test(s)) return '🔧';
+    if (/meet|call|sync|standup/.test(s)) return '📞';
+    if (/release|launch|ship/.test(s)) return '🚀';
+    if (/down|mainten|outage/.test(s)) return '⚠️';
+    if (/review|retro|audit/.test(s)) return '📋';
+    if (/train|onboard|workshop/.test(s)) return '🎓';
+    if (/deadline|due|submit/.test(s)) return '📌';
+    return '📅';
+  }
+
+  function formatDate(iso) {
+    const dt = new Date(iso);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const h = dt.getHours();
+    const m = dt.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hh = h % 12 || 12;
+    const mm = m.toString().padStart(2,'0');
+    return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()} · ${hh}:${mm} ${ampm}`;
+  }
+
+  function initials(name) {
+    return (name || 'T').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function buildCard(r, showDelete) {
+    const status = getStatus(r);
+    const cd = getCountdown(r);
+    const badgeMap = { today: 'badge-today', upcoming: 'badge-upcoming', past: 'badge-past' };
+    const badgeLabel = status.charAt(0).toUpperCase() + status.slice(1);
+    const countdownHtml = cd ? `<span class="countdown ${cd.urgent ? 'urgent' : 'soon'}">${cd.text}</span>` : '';
+    const deleteBtn = showDelete ? `<button class="delete-btn" onclick="deleteReminder(${r.id})" title="Remove">✕</button>` : '';
+    return `
+      <div class="rem-card ${status}">
+        <div class="rem-emoji">${getEmoji(r.subject)}</div>
+        <div class="rem-content">
+          <div class="rem-top">
+            <div class="rem-subject">${escHtml(r.subject)}</div>
+            <div class="rem-badges">
+              <span class="badge ${badgeMap[status]}">${badgeLabel}</span>
+              ${countdownHtml}
+              ${deleteBtn}
+            </div>
+          </div>
+          <div class="rem-meta">${formatDate(r.datetime)}</div>
+          ${r.message ? `<div class="rem-msg">${escHtml(r.message)}</div>` : ''}
+          <div class="rem-author">
+            <span class="author-dot">${initials(r.author)}</span>
+            ${escHtml(r.author || 'Team member')}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderDashboard() {
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const todayItems = reminders.filter(r => getStatus(r) === 'today');
+    const upcomingItems = reminders.filter(r => getStatus(r) === 'upcoming');
+
+    document.getElementById('hero').innerHTML = `
+      <div>
+        <div class="hero-label">Today</div>
+        <div class="hero-date">${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}</div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">${todayItems.length}</div>
+          <div class="hero-stat-label">Today</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">${upcomingItems.length}</div>
+          <div class="hero-stat-label">Upcoming</div>
+        </div>
+      </div>`;
+
+    document.getElementById('today-count').textContent = todayItems.length;
+    document.getElementById('upcoming-count').textContent = upcomingItems.length;
+
+    const todayList = document.getElementById('today-list');
+    if (todayItems.length === 0) {
+      todayList.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Nothing scheduled for today.</p></div>`;
+    } else {
+      todayList.innerHTML = todayItems.map(r => buildCard(r, false)).join('');
+    }
+
+    const upcomingList = document.getElementById('upcoming-list');
+    if (upcomingItems.length === 0) {
+      upcomingList.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No upcoming reminders.</p></div>`;
+    } else {
+      upcomingList.innerHTML = upcomingItems.map(r => buildCard(r, false)).join('');
+    }
+  }
+
+  function renderAll() {
+    const sorted = [...reminders].sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
+    document.getElementById('all-count').textContent = sorted.length;
+    const list = document.getElementById('all-list');
+    if (sorted.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No reminders yet. <button onclick="showPage('schedule', null)" style="background:none;border:none;cursor:pointer;color:#1D9E75;font-weight:600;font-size:14px;font-family:inherit;">Schedule one →</button></p></div>`;
+    } else {
+      list.innerHTML = sorted.map(r => buildCard(r, true)).join('');
+    }
+  }
+
+  function render() { renderDashboard(); renderAll(); }
+
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    if (btn) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    render();
+  }
+
+  function addReminder() {
+    const subject = document.getElementById('f-subject').value.trim();
+    const date = document.getElementById('f-date').value;
+    const time = document.getElementById('f-time').value;
+    const message = document.getElementById('f-message').value.trim();
+    const author = document.getElementById('f-author').value.trim();
+    if (!subject || !date || !time) { showToast('Please fill in subject, date and time.'); return; }
+    reminders.push({ id: Date.now(), subject, datetime: date + 'T' + time, message, author: author || 'Team member' });
+    reminders.sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
+    save();
+    document.getElementById('f-subject').value = '';
+    document.getElementById('f-date').value = '';
+    document.getElementById('f-time').value = '';
+    document.getElementById('f-message').value = '';
+    document.getElementById('f-author').value = '';
+    showToast('Reminder scheduled!');
+    showPage('dashboard', document.querySelector('.nav-tab'));
+  }
+
+  function deleteReminder(id) {
+    reminders = reminders.filter(r => r.id !== id);
+    save(); render();
+    showToast('Reminder removed.');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Set default date/time on form
+  const now = new Date();
+  now.setHours(now.getHours() + 1, 0, 0, 0);
+  document.getElementById('f-date').value = now.toISOString().slice(0,10);
+  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+
+  render();
+  setInterval(render, 60000);
+</script>
+</body>
+</html>
